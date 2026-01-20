@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculateur de Validation d'Année</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 40px;
+            max-width: 600px;
+            width: 100%;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .stat-card.success {
+            background: #d4edda;
+            border: 2px solid #28a745;
+        }
+
+        .stat-card.danger {
+            background: #f8d7da;
+            border: 2px solid #dc3545;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #666;
+            text-transform: uppercase;
+            margin-bottom: 5px;
+        }
+
+        .stat-value {
+            font-size: 28px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .modules-section {
+            margin-bottom: 20px;
+        }
+
+        .module-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 15px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+
+        .module-item input {
+            flex: 1;
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+
+        .module-item select {
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+            min-width: 100px;
+            cursor: pointer;
+        }
+
+        .module-item select.valid {
+            border-color: #28a745;
+            background: #d4edda;
+        }
+
+        .module-item select.invalid {
+            border-color: #dc3545;
+            background: #f8d7da;
+        }
+
+        .delete-btn {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 18px;
+            transition: background 0.3s;
+        }
+
+        .delete-btn:hover {
+            background: #c82333;
+        }
+
+        .add-btn {
+            width: 100%;
+            padding: 15px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background 0.3s;
+            margin-bottom: 20px;
+        }
+
+        .add-btn:hover {
+            background: #5568d3;
+        }
+
+        .result {
+            text-align: center;
+            padding: 20px;
+            border-radius: 10px;
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .result.success {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .result.danger {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .result.warning {
+            background: #fff3cd;
+            color: #856404;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📚 Calculateur de Validation</h1>
+        <p class="subtitle">Minimum requis : Note C ou supérieure • 70% des modules validés</p>
+
+        <div class="stats">
+            <div class="stat-card" id="totalModulesCard">
+                <div class="stat-label">Total Modules</div>
+                <div class="stat-value" id="totalModules">0</div>
+            </div>
+            <div class="stat-card" id="validModulesCard">
+                <div class="stat-label">Modules Validés</div>
+                <div class="stat-value" id="validModules">0</div>
+            </div>
+            <div class="stat-card" id="percentageCard">
+                <div class="stat-label">Pourcentage</div>
+                <div class="stat-value" id="percentage">0%</div>
+            </div>
+            <div class="stat-card" id="neededCard">
+                <div class="stat-label">Encore Besoin</div>
+                <div class="stat-value" id="needed">0</div>
+            </div>
+        </div>
+
+        <div class="modules-section" id="modulesList"></div>
+
+        <button class="add-btn" onclick="addModule()">+ Ajouter un module</button>
+
+        <div class="result" id="result"></div>
+    </div>
+
+    <script>
+        let modules = [];
+
+        const grades = ['E', 'D', 'C', 'B', 'A', 'A+'];
+        const validGrades = ['C', 'B', 'A', 'A+'];
+
+        function addModule() {
+            modules.push({ name: '', grade: 'E' });
+            render();
+        }
+
+        function deleteModule(index) {
+            modules.splice(index, 1);
+            render();
+        }
+
+        function updateModule(index, field, value) {
+            modules[index][field] = value;
+            calculate();
+        }
+
+        function calculate() {
+            const total = modules.length;
+            const valid = modules.filter(m => validGrades.includes(m.grade)).length;
+            const percent = total > 0 ? Math.round((valid / total) * 100) : 0;
+            const needed = Math.max(0, Math.ceil(total * 0.7) - valid);
+
+            document.getElementById('totalModules').textContent = total;
+            document.getElementById('validModules').textContent = valid;
+            document.getElementById('percentage').textContent = percent + '%';
+            document.getElementById('needed').textContent = needed;
+
+            const percentCard = document.getElementById('percentageCard');
+            const neededCard = document.getElementById('neededCard');
+            const validCard = document.getElementById('validModulesCard');
+
+            percentCard.className = 'stat-card';
+            neededCard.className = 'stat-card';
+            validCard.className = 'stat-card';
+
+            if (percent >= 70) {
+                percentCard.classList.add('success');
+                neededCard.classList.add('success');
+                validCard.classList.add('success');
+            } else {
+                percentCard.classList.add('danger');
+                neededCard.classList.add('danger');
+            }
+
+            const result = document.getElementById('result');
+            if (total === 0) {
+                result.className = 'result warning';
+                result.textContent = 'Ajoute tes modules pour commencer !';
+            } else if (percent >= 70) {
+                result.className = 'result success';
+                result.textContent = `✅ Année validée ! Tu as ${percent}% de modules validés (${valid}/${total})`;
+            } else {
+                result.className = 'result danger';
+                result.textContent = `❌ Année non validée. Il te faut encore ${needed} module(s) validé(s) pour atteindre 70%`;
+            }
+        }
+
+        function render() {
+            const list = document.getElementById('modulesList');
+            list.innerHTML = '';
+
+            modules.forEach((module, index) => {
+                const div = document.createElement('div');
+                div.className = 'module-item';
+
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.placeholder = 'Nom du module';
+                input.value = module.name;
+                input.oninput = (e) => updateModule(index, 'name', e.target.value);
+
+                const select = document.createElement('select');
+                grades.forEach(grade => {
+                    const option = document.createElement('option');
+                    option.value = grade;
+                    option.textContent = grade;
+                    if (grade === module.grade) option.selected = true;
+                    select.appendChild(option);
+                });
+                select.onchange = (e) => {
+                    updateModule(index, 'grade', e.target.value);
+                    render();
+                };
+
+                if (validGrades.includes(module.grade)) {
+                    select.className = 'valid';
+                } else {
+                    select.className = 'invalid';
+                }
+
+                const deleteBtn = document.createElement('button');
+                deleteBtn.className = 'delete-btn';
+                deleteBtn.textContent = '×';
+                deleteBtn.onclick = () => deleteModule(index);
+
+                div.appendChild(input);
+                div.appendChild(select);
+                div.appendChild(deleteBtn);
+                list.appendChild(div);
+            });
+
+            calculate();
+        }
+
+        // Initialiser avec quelques modules d'exemple
+        modules = [
+            { name: 'Développement Web', grade: 'B' },
+            { name: 'Base de données', grade: 'C' },
+            { name: 'Algorithmique', grade: 'D' }
+        ];
+        render();
+    </script>
+</body>
+</html>
