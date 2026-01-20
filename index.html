@@ -26,7 +26,7 @@
         border-radius: 20px;
         box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
         padding: 40px;
-        max-width: 700px;
+        max-width: 800px;
         width: 100%;
       }
 
@@ -67,11 +67,11 @@
 
       #pasteArea {
         width: 100%;
-        min-height: 120px;
+        min-height: 150px;
         padding: 15px;
         border: 2px dashed #001427;
         border-radius: 8px;
-        font-size: 14px;
+        font-size: 12px;
         font-family: monospace;
         resize: vertical;
       }
@@ -90,6 +90,7 @@
         border: none;
         border-radius: 8px;
         font-size: 15px;
+        font-weight: bold;
         cursor: pointer;
         transition: background 0.3s;
         margin-top: 10px;
@@ -139,6 +140,8 @@
 
       .modules-section {
         margin-bottom: 20px;
+        max-height: 400px;
+        overflow-y: auto;
       }
 
       .empty-state {
@@ -153,56 +156,61 @@
         margin-bottom: 15px;
       }
 
-      .module-item {
-        display: flex;
-        align-items: center;
-        gap: 15px;
-        margin-bottom: 15px;
-        padding: 15px;
+      .module-card {
         background: #f8f9fa;
         border-radius: 10px;
+        padding: 15px;
+        margin-bottom: 15px;
+        border-left: 4px solid #001427;
       }
 
-      .module-item input {
-        flex: 1;
-        padding: 10px;
-        border: 2px solid #ddd;
-        border-radius: 5px;
-        font-size: 16px;
-      }
-
-      .module-item select {
-        padding: 10px;
-        border: 2px solid #ddd;
-        border-radius: 5px;
-        font-size: 16px;
-        min-width: 100px;
-        cursor: pointer;
-      }
-
-      .module-item select.valid {
-        border-color: #28a745;
+      .module-card.valid {
+        border-left-color: #28a745;
         background: #d4edda;
       }
 
-      .module-item select.invalid {
-        border-color: #dd1d2a;
+      .module-card.invalid {
+        border-left-color: #dd1d2a;
         background: #ffe6e8;
       }
 
-      .delete-btn {
-        background: #dd1d2a;
-        color: #ffffff;
-        border: none;
-        padding: 10px 15px;
-        border-radius: 5px;
-        cursor: pointer;
-        font-size: 18px;
-        transition: background 0.3s;
+      .module-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 10px;
       }
 
-      .delete-btn:hover {
-        background: #b91621;
+      .module-name {
+        font-weight: bold;
+        color: #001427;
+        font-size: 14px;
+        flex: 1;
+      }
+
+      .module-grade {
+        font-size: 20px;
+        font-weight: bold;
+        color: #001427;
+        padding: 5px 15px;
+        background: white;
+        border-radius: 5px;
+        min-width: 60px;
+        text-align: center;
+      }
+
+      .module-details {
+        font-size: 12px;
+        color: #001427;
+        opacity: 0.7;
+        margin-top: 5px;
+      }
+
+      .exam-item {
+        font-size: 11px;
+        padding: 3px 0;
+        color: #001427;
+        opacity: 0.6;
       }
 
       .add-btn {
@@ -273,19 +281,19 @@
       </p>
 
       <div class="import-section">
-        <label class="import-label">📋 Importer tes notes</label>
+        <label class="import-label">📋 Importer ton relevé de notes</label>
         <p class="import-help">
-          Copie-colle ton relevé de notes depuis le site (modules + notes) :
+          Copie-colle TOUT ton relevé de notes depuis le site (modules,
+          épreuves, coefficients, notes) :
         </p>
         <textarea
           id="pasteArea"
           placeholder="Exemple :
-Développement Web    B
-Base de données      C+
-Algorithmique        A-"
+IANG260 - Framework front (React, Angular, NextJs,..)HOSSEPIAN AudreyÉpreuveDateCoefficientNote-
+IAPI261 - Projet MESI 4ANGLADE LucieÉpreuveDateCoefficientNote-"
         ></textarea>
         <button class="import-btn" onclick="importNotes()">
-          ✨ Importer automatiquement
+          ✨ Importer et calculer automatiquement
         </button>
       </div>
 
@@ -311,16 +319,13 @@ Algorithmique        A-"
       <div class="modules-section" id="modulesList">
         <div class="empty-state">
           <div class="empty-state-icon">📝</div>
-          <p>Aucun module ajouté</p>
+          <p>Aucun module importé</p>
           <p style="font-size: 14px; margin-top: 10px">
-            Colle tes notes ci-dessus ou ajoute-les manuellement
+            Colle ton relevé de notes ci-dessus
           </p>
         </div>
       </div>
 
-      <button class="add-btn" onclick="addModule()">
-        + Ajouter un module manuellement
-      </button>
       <button
         class="clear-btn"
         onclick="clearAll()"
@@ -353,6 +358,22 @@ Algorithmique        A-"
       ];
       const validGrades = ["C-", "C", "C+", "B-", "B", "B+", "A-", "A", "A+"];
 
+      const gradeValues = {
+        E: 0,
+        "D-": 1,
+        D: 2,
+        "D+": 3,
+        "C-": 4,
+        C: 5,
+        "C+": 6,
+        "B-": 7,
+        B: 8,
+        "B+": 9,
+        "A-": 10,
+        A: 11,
+        "A+": 12,
+      };
+
       function importNotes() {
         const text = document.getElementById("pasteArea").value.trim();
         if (!text) {
@@ -360,57 +381,112 @@ Algorithmique        A-"
           return;
         }
 
-        const lines = text.split("\n").filter((line) => line.trim());
-        const imported = [];
+        const lines = text.split("\n");
+        const parsedModules = [];
+        let currentModule = null;
 
         for (let line of lines) {
           line = line.trim();
           if (!line) continue;
 
-          let foundGrade = null;
-          let moduleName = line;
+          const moduleMatch = line.match(
+            /^([A-Z]{4}\d{3})\s*-\s*(.+?)([A-Z\s]+)Épreuve/i,
+          );
 
-          for (let grade of grades) {
-            const regex = new RegExp(
-              "\\b" + grade.replace("+", "\\+").replace("-", "\\-") + "\\b",
-              "i",
-            );
-            if (regex.test(line)) {
-              foundGrade = grade;
-              moduleName = line.replace(regex, "").trim();
-              break;
+          if (moduleMatch) {
+            if (currentModule && currentModule.exams.length > 0) {
+              parsedModules.push(currentModule);
+            }
+
+            currentModule = {
+              code: moduleMatch[1],
+              name: moduleMatch[2].trim(),
+              professor: moduleMatch[3].trim(),
+              exams: [],
+            };
+          } else if (currentModule) {
+            let foundGrade = null;
+            let coefficient = 1;
+
+            const coeffMatch = line.match(/(\d+)([A-Z+-]+)$/i);
+            if (coeffMatch) {
+              coefficient = parseInt(coeffMatch[1]);
+              const potentialGrade = coeffMatch[2];
+              if (grades.includes(potentialGrade)) {
+                foundGrade = potentialGrade;
+              }
+            } else {
+              for (let grade of grades) {
+                const regex = new RegExp(
+                  grade.replace("+", "\\+").replace("-", "\\-") + "$",
+                  "i",
+                );
+                if (regex.test(line)) {
+                  foundGrade = grade;
+                  const coeffRegex = /(\d+)(?=[A-Z+-]+$)/i;
+                  const coeffMatch = line.match(coeffRegex);
+                  if (coeffMatch) {
+                    coefficient = parseInt(coeffMatch[1]);
+                  }
+                  break;
+                }
+              }
+            }
+
+            if (foundGrade) {
+              const examName = line
+                .split(/\d{2}\/\d{2}\/\d{4}/)[0]
+                .replace(/ÉpreuveDateCoefficientNote/gi, "")
+                .trim();
+              currentModule.exams.push({
+                name: examName || "Évaluation",
+                grade: foundGrade,
+                coefficient: coefficient,
+              });
             }
           }
+        }
 
-          if (foundGrade && moduleName) {
-            imported.push({
-              name: moduleName.replace(/\s+/g, " "),
-              grade: foundGrade,
-            });
+        if (currentModule && currentModule.exams.length > 0) {
+          parsedModules.push(currentModule);
+        }
+
+        modules = parsedModules.map((m) => {
+          let finalGrade = "-";
+          if (m.exams.length > 0) {
+            let totalWeighted = 0;
+            let totalCoeff = 0;
+
+            for (let exam of m.exams) {
+              totalWeighted += gradeValues[exam.grade] * exam.coefficient;
+              totalCoeff += exam.coefficient;
+            }
+
+            const avgValue = Math.round(totalWeighted / totalCoeff);
+            finalGrade =
+              Object.keys(gradeValues).find(
+                (key) => gradeValues[key] === avgValue,
+              ) || "C";
           }
-        }
 
-        if (imported.length === 0) {
-          alert(
-            "Aucune note trouvée. Vérifie que ton texte contient des modules avec des notes (E, D-, D, D+, C-, C, C+, B-, B, B+, A-, A, A+)",
-          );
-          return;
-        }
+          return {
+            code: m.code,
+            name: m.name,
+            grade: finalGrade,
+            exams: m.exams,
+          };
+        });
 
-        modules = imported;
         document.getElementById("pasteArea").value = "";
         render();
-        alert(`✅ ${imported.length} module(s) importé(s) avec succès !`);
-      }
 
-      function addModule() {
-        modules.push({ name: "", grade: "E" });
-        render();
-      }
-
-      function deleteModule(index) {
-        modules.splice(index, 1);
-        render();
+        if (modules.length > 0) {
+          alert(`✅ ${modules.length} module(s) importé(s) avec succès !`);
+        } else {
+          alert(
+            "❌ Aucun module trouvé. Vérifie le format de ton relevé de notes.",
+          );
+        }
       }
 
       function clearAll() {
@@ -420,15 +496,10 @@ Algorithmique        A-"
         }
       }
 
-      function updateModule(index, field, value) {
-        modules[index][field] = value;
-        calculate();
-      }
-
       function calculate() {
         const total = modules.length;
-        const valid = modules.filter((m) =>
-          validGrades.includes(m.grade),
+        const valid = modules.filter(
+          (m) => m.grade !== "-" && validGrades.includes(m.grade),
         ).length;
         const percent = total > 0 ? Math.round((valid / total) * 100) : 0;
         const needed = Math.max(0, Math.ceil(total * 0.7) - valid);
@@ -458,7 +529,7 @@ Algorithmique        A-"
         const result = document.getElementById("result");
         if (total === 0) {
           result.className = "result warning";
-          result.textContent = "Ajoute tes modules pour commencer !";
+          result.textContent = "Importe ton relevé de notes pour commencer !";
         } else if (percent >= 70) {
           result.className = "result success";
           result.textContent = `✅ Année validée ! Tu as ${percent}% de modules validés (${valid}/${total})`;
@@ -476,8 +547,8 @@ Algorithmique        A-"
           list.innerHTML = `
                     <div class="empty-state">
                         <div class="empty-state-icon">📝</div>
-                        <p>Aucun module ajouté</p>
-                        <p style="font-size: 14px; margin-top: 10px;">Colle tes notes ci-dessus ou ajoute-les manuellement</p>
+                        <p>Aucun module importé</p>
+                        <p style="font-size: 14px; margin-top: 10px;">Colle ton relevé de notes ci-dessus</p>
                     </div>
                 `;
           clearBtn.style.display = "none";
@@ -485,43 +556,29 @@ Algorithmique        A-"
           list.innerHTML = "";
           clearBtn.style.display = "block";
 
-          modules.forEach((module, index) => {
+          modules.forEach((module) => {
+            const isValid =
+              module.grade !== "-" && validGrades.includes(module.grade);
             const div = document.createElement("div");
-            div.className = "module-item";
+            div.className = `module-card ${isValid ? "valid" : module.grade === "-" ? "" : "invalid"}`;
 
-            const input = document.createElement("input");
-            input.type = "text";
-            input.placeholder = "Nom du module";
-            input.value = module.name;
-            input.oninput = (e) => updateModule(index, "name", e.target.value);
-
-            const select = document.createElement("select");
-            grades.forEach((grade) => {
-              const option = document.createElement("option");
-              option.value = grade;
-              option.textContent = grade;
-              if (grade === module.grade) option.selected = true;
-              select.appendChild(option);
-            });
-            select.onchange = (e) => {
-              updateModule(index, "grade", e.target.value);
-              render();
-            };
-
-            if (validGrades.includes(module.grade)) {
-              select.className = "valid";
-            } else {
-              select.className = "invalid";
+            let examsHTML = "";
+            if (module.exams && module.exams.length > 0) {
+              examsHTML = '<div class="module-details">';
+              module.exams.forEach((exam) => {
+                examsHTML += `<div class="exam-item">• ${exam.name}: ${exam.grade} (coef. ${exam.coefficient})</div>`;
+              });
+              examsHTML += "</div>";
             }
 
-            const deleteBtn = document.createElement("button");
-            deleteBtn.className = "delete-btn";
-            deleteBtn.textContent = "×";
-            deleteBtn.onclick = () => deleteModule(index);
+            div.innerHTML = `
+                        <div class="module-header">
+                            <div class="module-name">${module.code} - ${module.name}</div>
+                            <div class="module-grade">${module.grade}</div>
+                        </div>
+                        ${examsHTML}
+                    `;
 
-            div.appendChild(input);
-            div.appendChild(select);
-            div.appendChild(deleteBtn);
             list.appendChild(div);
           });
         }
