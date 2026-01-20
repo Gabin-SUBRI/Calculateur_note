@@ -174,6 +174,11 @@
         background: #ffe6e8;
       }
 
+      .module-card.no-grade {
+        border-left-color: #6c757d;
+        background: #e9ecef;
+      }
+
       .module-header {
         display: flex;
         justify-content: space-between;
@@ -211,23 +216,6 @@
         padding: 3px 0;
         color: #001427;
         opacity: 0.6;
-      }
-
-      .add-btn {
-        width: 100%;
-        padding: 15px;
-        background: #001427;
-        color: #ffffff;
-        border: none;
-        border-radius: 10px;
-        font-size: 16px;
-        cursor: pointer;
-        transition: background 0.3s;
-        margin-bottom: 20px;
-      }
-
-      .add-btn:hover {
-        background: #002547;
       }
 
       .clear-btn {
@@ -271,6 +259,16 @@
         background: #fff3cd;
         color: #856404;
       }
+
+      .debug-info {
+        margin-top: 10px;
+        padding: 10px;
+        background: #f8f9fa;
+        border-radius: 5px;
+        font-size: 11px;
+        color: #666;
+        display: none;
+      }
     </style>
   </head>
   <body>
@@ -283,18 +281,16 @@
       <div class="import-section">
         <label class="import-label">📋 Importer ton relevé de notes</label>
         <p class="import-help">
-          Copie-colle TOUT ton relevé de notes depuis le site (modules,
-          épreuves, coefficients, notes) :
+          Copie-colle TOUT ton relevé de notes depuis le site :
         </p>
         <textarea
           id="pasteArea"
-          placeholder="Exemple :
-IANG260 - Framework front (React, Angular, NextJs,..)HOSSEPIAN AudreyÉpreuveDateCoefficientNote-
-IAPI261 - Projet MESI 4ANGLADE LucieÉpreuveDateCoefficientNote-"
+          placeholder="Colle ici ton relevé complet..."
         ></textarea>
         <button class="import-btn" onclick="importNotes()">
           ✨ Importer et calculer automatiquement
         </button>
+        <div class="debug-info" id="debugInfo"></div>
       </div>
 
       <div class="stats">
@@ -375,8 +371,8 @@ IAPI261 - Projet MESI 4ANGLADE LucieÉpreuveDateCoefficientNote-"
       };
 
       function importNotes() {
-        const text = document.getElementById("pasteArea").value.trim();
-        if (!text) {
+        const text = document.getElementById("pasteArea").value;
+        if (!text.trim()) {
           alert("Colle d'abord ton relevé de notes dans la zone de texte !");
           return;
         }
@@ -384,17 +380,17 @@ IAPI261 - Projet MESI 4ANGLADE LucieÉpreuveDateCoefficientNote-"
         const lines = text.split("\n");
         const parsedModules = [];
         let currentModule = null;
+        let isHeaderLine = false;
 
-        for (let line of lines) {
-          line = line.trim();
-          if (!line) continue;
+        for (let i = 0; i < lines.length; i++) {
+          const line = lines[i];
 
-          const moduleMatch = line.match(
-            /^([A-Z]{4}\d{3})\s*-\s*(.+?)([A-Z\s]+)Épreuve/i,
-          );
+          // Détection d'une ligne de module (commence par un code genre IANG260)
+          const moduleMatch = line.match(/^([A-Z]{4}\d{3})\s*-\s*(.+?)\t(.+)/);
 
           if (moduleMatch) {
-            if (currentModule && currentModule.exams.length > 0) {
+            // Sauvegarder le module précédent
+            if (currentModule) {
               parsedModules.push(currentModule);
             }
 
@@ -404,55 +400,52 @@ IAPI261 - Projet MESI 4ANGLADE LucieÉpreuveDateCoefficientNote-"
               professor: moduleMatch[3].trim(),
               exams: [],
             };
-          } else if (currentModule) {
-            let foundGrade = null;
-            let coefficient = 1;
+            isHeaderLine = false;
+          }
+          // Ligne d'en-tête (Épreuve Date Coefficient Note)
+          else if (
+            line.includes("preuve") &&
+            line.includes("Date") &&
+            line.includes("Coefficient")
+          ) {
+            isHeaderLine = true;
+          }
+          // Ligne vide ou tiret seul
+          else if (line.trim() === "-" || line.trim() === "") {
+            continue;
+          }
+          // Ligne d'épreuve avec note
+          else if (currentModule && !isHeaderLine && line.includes("\t")) {
+            const parts = line.split("\t");
 
-            const coeffMatch = line.match(/(\d+)([A-Z+-]+)$/i);
-            if (coeffMatch) {
-              coefficient = parseInt(coeffMatch[1]);
-              const potentialGrade = coeffMatch[2];
-              if (grades.includes(potentialGrade)) {
-                foundGrade = potentialGrade;
-              }
-            } else {
-              for (let grade of grades) {
-                const regex = new RegExp(
-                  grade.replace("+", "\\+").replace("-", "\\-") + "$",
-                  "i",
-                );
-                if (regex.test(line)) {
-                  foundGrade = grade;
-                  const coeffRegex = /(\d+)(?=[A-Z+-]+$)/i;
-                  const coeffMatch = line.match(coeffRegex);
-                  if (coeffMatch) {
-                    coefficient = parseInt(coeffMatch[1]);
-                  }
-                  break;
-                }
-              }
-            }
+            if (parts.length >= 4) {
+              const examName = parts[0].trim();
+              const date = parts[1].trim();
+              const coef = parts[2].trim();
+              const note = parts[3].trim();
 
-            if (foundGrade) {
-              const examName = line
-                .split(/\d{2}\/\d{2}\/\d{4}/)[0]
-                .replace(/ÉpreuveDateCoefficientNote/gi, "")
-                .trim();
-              currentModule.exams.push({
-                name: examName || "Évaluation",
-                grade: foundGrade,
-                coefficient: coefficient,
-              });
+              // Vérifier si la note est valide
+              if (note && note !== "-" && grades.includes(note)) {
+                currentModule.exams.push({
+                  name: examName || "Évaluation",
+                  date: date,
+                  coefficient: parseInt(coef) || 1,
+                  grade: note,
+                });
+              }
             }
           }
         }
 
-        if (currentModule && currentModule.exams.length > 0) {
+        // Ajouter le dernier module
+        if (currentModule) {
           parsedModules.push(currentModule);
         }
 
+        // Calculer la note finale pour chaque module
         modules = parsedModules.map((m) => {
           let finalGrade = "-";
+
           if (m.exams.length > 0) {
             let totalWeighted = 0;
             let totalCoeff = 0;
@@ -481,10 +474,12 @@ IAPI261 - Projet MESI 4ANGLADE LucieÉpreuveDateCoefficientNote-"
         render();
 
         if (modules.length > 0) {
-          alert(`✅ ${modules.length} module(s) importé(s) avec succès !`);
+          alert(
+            `✅ ${modules.length} module(s) importé(s) avec succès !\n${modules.filter((m) => m.grade !== "-").length} module(s) avec des notes.`,
+          );
         } else {
           alert(
-            "❌ Aucun module trouvé. Vérifie le format de ton relevé de notes.",
+            "❌ Aucun module trouvé. Vérifie que tu as bien copié tout le relevé.",
           );
         }
       }
@@ -497,7 +492,7 @@ IAPI261 - Projet MESI 4ANGLADE LucieÉpreuveDateCoefficientNote-"
       }
 
       function calculate() {
-        const total = modules.length;
+        const total = modules.filter((m) => m.grade !== "-").length;
         const valid = modules.filter(
           (m) => m.grade !== "-" && validGrades.includes(m.grade),
         ).length;
@@ -521,7 +516,7 @@ IAPI261 - Projet MESI 4ANGLADE LucieÉpreuveDateCoefficientNote-"
           percentCard.classList.add("success");
           neededCard.classList.add("success");
           validCard.classList.add("success");
-        } else {
+        } else if (total > 0) {
           percentCard.classList.add("danger");
           neededCard.classList.add("danger");
         }
@@ -557,10 +552,20 @@ IAPI261 - Projet MESI 4ANGLADE LucieÉpreuveDateCoefficientNote-"
           clearBtn.style.display = "block";
 
           modules.forEach((module) => {
-            const isValid =
-              module.grade !== "-" && validGrades.includes(module.grade);
+            const hasGrade = module.grade !== "-";
+            const isValid = hasGrade && validGrades.includes(module.grade);
             const div = document.createElement("div");
-            div.className = `module-card ${isValid ? "valid" : module.grade === "-" ? "" : "invalid"}`;
+
+            let cardClass = "module-card";
+            if (!hasGrade) {
+              cardClass += " no-grade";
+            } else if (isValid) {
+              cardClass += " valid";
+            } else {
+              cardClass += " invalid";
+            }
+
+            div.className = cardClass;
 
             let examsHTML = "";
             if (module.exams && module.exams.length > 0) {
@@ -569,6 +574,9 @@ IAPI261 - Projet MESI 4ANGLADE LucieÉpreuveDateCoefficientNote-"
                 examsHTML += `<div class="exam-item">• ${exam.name}: ${exam.grade} (coef. ${exam.coefficient})</div>`;
               });
               examsHTML += "</div>";
+            } else if (!hasGrade) {
+              examsHTML =
+                '<div class="module-details"><div class="exam-item">Pas encore de notes</div></div>';
             }
 
             div.innerHTML = `
