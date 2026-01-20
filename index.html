@@ -1,329 +1,535 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="fr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Calculateur de Validation d'Année</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
 
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 20px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(135deg, #001427 0%, #003057 100%);
+        min-height: 100vh;
+        padding: 20px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
 
-        .container {
-            background: white;
-            border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-            padding: 40px;
-            max-width: 600px;
-            width: 100%;
-        }
+      .container {
+        background: #ffffff;
+        border-radius: 20px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+        padding: 40px;
+        max-width: 700px;
+        width: 100%;
+      }
 
-        h1 {
-            color: #333;
-            margin-bottom: 10px;
-            text-align: center;
-        }
+      h1 {
+        color: #001427;
+        margin-bottom: 10px;
+        text-align: center;
+      }
 
-        .subtitle {
-            text-align: center;
-            color: #666;
-            margin-bottom: 30px;
-            font-size: 14px;
-        }
+      .subtitle {
+        text-align: center;
+        color: #001427;
+        margin-bottom: 30px;
+        font-size: 14px;
+        opacity: 0.7;
+      }
 
-        .stats {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 15px;
-            margin-bottom: 30px;
-        }
+      .import-section {
+        margin-bottom: 30px;
+        padding: 20px;
+        background: #f8f9fa;
+        border-radius: 10px;
+      }
 
-        .stat-card {
-            background: #f8f9fa;
-            padding: 20px;
-            border-radius: 10px;
-            text-align: center;
-        }
+      .import-label {
+        font-weight: bold;
+        color: #001427;
+        margin-bottom: 10px;
+        display: block;
+      }
 
-        .stat-card.success {
-            background: #d4edda;
-            border: 2px solid #28a745;
-        }
+      .import-help {
+        font-size: 13px;
+        color: #001427;
+        margin-bottom: 10px;
+        opacity: 0.7;
+      }
 
-        .stat-card.danger {
-            background: #f8d7da;
-            border: 2px solid #dc3545;
-        }
+      #pasteArea {
+        width: 100%;
+        min-height: 120px;
+        padding: 15px;
+        border: 2px dashed #001427;
+        border-radius: 8px;
+        font-size: 14px;
+        font-family: monospace;
+        resize: vertical;
+      }
 
-        .stat-label {
-            font-size: 12px;
-            color: #666;
-            text-transform: uppercase;
-            margin-bottom: 5px;
-        }
+      #pasteArea:focus {
+        outline: none;
+        border-color: #dd1d2a;
+        background: #fff5f5;
+      }
 
-        .stat-value {
-            font-size: 28px;
-            font-weight: bold;
-            color: #333;
-        }
+      .import-btn {
+        width: 100%;
+        padding: 12px;
+        background: #dd1d2a;
+        color: #ffffff;
+        border: none;
+        border-radius: 8px;
+        font-size: 15px;
+        cursor: pointer;
+        transition: background 0.3s;
+        margin-top: 10px;
+      }
 
-        .modules-section {
-            margin-bottom: 20px;
-        }
+      .import-btn:hover {
+        background: #b91621;
+      }
 
-        .module-item {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            margin-bottom: 15px;
-            padding: 15px;
-            background: #f8f9fa;
-            border-radius: 10px;
-        }
+      .stats {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 15px;
+        margin-bottom: 30px;
+      }
 
-        .module-item input {
-            flex: 1;
-            padding: 10px;
-            border: 2px solid #ddd;
-            border-radius: 5px;
-            font-size: 16px;
-        }
+      .stat-card {
+        background: #f8f9fa;
+        padding: 20px;
+        border-radius: 10px;
+        text-align: center;
+      }
 
-        .module-item select {
-            padding: 10px;
-            border: 2px solid #ddd;
-            border-radius: 5px;
-            font-size: 16px;
-            min-width: 100px;
-            cursor: pointer;
-        }
+      .stat-card.success {
+        background: #d4edda;
+        border: 2px solid #28a745;
+      }
 
-        .module-item select.valid {
-            border-color: #28a745;
-            background: #d4edda;
-        }
+      .stat-card.danger {
+        background: #ffe6e8;
+        border: 2px solid #dd1d2a;
+      }
 
-        .module-item select.invalid {
-            border-color: #dc3545;
-            background: #f8d7da;
-        }
+      .stat-label {
+        font-size: 12px;
+        color: #001427;
+        text-transform: uppercase;
+        margin-bottom: 5px;
+        opacity: 0.7;
+      }
 
-        .delete-btn {
-            background: #dc3545;
-            color: white;
-            border: none;
-            padding: 10px 15px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 18px;
-            transition: background 0.3s;
-        }
+      .stat-value {
+        font-size: 28px;
+        font-weight: bold;
+        color: #001427;
+      }
 
-        .delete-btn:hover {
-            background: #c82333;
-        }
+      .modules-section {
+        margin-bottom: 20px;
+      }
 
-        .add-btn {
-            width: 100%;
-            padding: 15px;
-            background: #667eea;
-            color: white;
-            border: none;
-            border-radius: 10px;
-            font-size: 16px;
-            cursor: pointer;
-            transition: background 0.3s;
-            margin-bottom: 20px;
-        }
+      .empty-state {
+        text-align: center;
+        padding: 40px 20px;
+        color: #001427;
+        opacity: 0.5;
+      }
 
-        .add-btn:hover {
-            background: #5568d3;
-        }
+      .empty-state-icon {
+        font-size: 48px;
+        margin-bottom: 15px;
+      }
 
-        .result {
-            text-align: center;
-            padding: 20px;
-            border-radius: 10px;
-            font-size: 18px;
-            font-weight: bold;
-        }
+      .module-item {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        margin-bottom: 15px;
+        padding: 15px;
+        background: #f8f9fa;
+        border-radius: 10px;
+      }
 
-        .result.success {
-            background: #d4edda;
-            color: #155724;
-        }
+      .module-item input {
+        flex: 1;
+        padding: 10px;
+        border: 2px solid #ddd;
+        border-radius: 5px;
+        font-size: 16px;
+      }
 
-        .result.danger {
-            background: #f8d7da;
-            color: #721c24;
-        }
+      .module-item select {
+        padding: 10px;
+        border: 2px solid #ddd;
+        border-radius: 5px;
+        font-size: 16px;
+        min-width: 100px;
+        cursor: pointer;
+      }
 
-        .result.warning {
-            background: #fff3cd;
-            color: #856404;
-        }
+      .module-item select.valid {
+        border-color: #28a745;
+        background: #d4edda;
+      }
+
+      .module-item select.invalid {
+        border-color: #dd1d2a;
+        background: #ffe6e8;
+      }
+
+      .delete-btn {
+        background: #dd1d2a;
+        color: #ffffff;
+        border: none;
+        padding: 10px 15px;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 18px;
+        transition: background 0.3s;
+      }
+
+      .delete-btn:hover {
+        background: #b91621;
+      }
+
+      .add-btn {
+        width: 100%;
+        padding: 15px;
+        background: #001427;
+        color: #ffffff;
+        border: none;
+        border-radius: 10px;
+        font-size: 16px;
+        cursor: pointer;
+        transition: background 0.3s;
+        margin-bottom: 20px;
+      }
+
+      .add-btn:hover {
+        background: #002547;
+      }
+
+      .clear-btn {
+        width: 100%;
+        padding: 12px;
+        background: #001427;
+        color: #ffffff;
+        border: none;
+        border-radius: 10px;
+        font-size: 14px;
+        cursor: pointer;
+        transition: background 0.3s;
+        margin-bottom: 20px;
+        opacity: 0.7;
+      }
+
+      .clear-btn:hover {
+        background: #002547;
+        opacity: 1;
+      }
+
+      .result {
+        text-align: center;
+        padding: 20px;
+        border-radius: 10px;
+        font-size: 18px;
+        font-weight: bold;
+      }
+
+      .result.success {
+        background: #d4edda;
+        color: #155724;
+      }
+
+      .result.danger {
+        background: #ffe6e8;
+        color: #dd1d2a;
+      }
+
+      .result.warning {
+        background: #fff3cd;
+        color: #856404;
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <div class="container">
-        <h1>📚 Calculateur de Validation</h1>
-        <p class="subtitle">Minimum requis : Note C ou supérieure • 70% des modules validés</p>
+      <h1>📚 Calculateur de Validation</h1>
+      <p class="subtitle">
+        Minimum requis : Note C- ou supérieure • 70% des modules validés
+      </p>
 
-        <div class="stats">
-            <div class="stat-card" id="totalModulesCard">
-                <div class="stat-label">Total Modules</div>
-                <div class="stat-value" id="totalModules">0</div>
-            </div>
-            <div class="stat-card" id="validModulesCard">
-                <div class="stat-label">Modules Validés</div>
-                <div class="stat-value" id="validModules">0</div>
-            </div>
-            <div class="stat-card" id="percentageCard">
-                <div class="stat-label">Pourcentage</div>
-                <div class="stat-value" id="percentage">0%</div>
-            </div>
-            <div class="stat-card" id="neededCard">
-                <div class="stat-label">Encore Besoin</div>
-                <div class="stat-value" id="needed">0</div>
-            </div>
+      <div class="import-section">
+        <label class="import-label">📋 Importer tes notes</label>
+        <p class="import-help">
+          Copie-colle ton relevé de notes depuis le site (modules + notes) :
+        </p>
+        <textarea
+          id="pasteArea"
+          placeholder="Exemple :
+Développement Web    B
+Base de données      C+
+Algorithmique        A-"
+        ></textarea>
+        <button class="import-btn" onclick="importNotes()">
+          ✨ Importer automatiquement
+        </button>
+      </div>
+
+      <div class="stats">
+        <div class="stat-card" id="totalModulesCard">
+          <div class="stat-label">Total Modules</div>
+          <div class="stat-value" id="totalModules">0</div>
         </div>
+        <div class="stat-card" id="validModulesCard">
+          <div class="stat-label">Modules Validés</div>
+          <div class="stat-value" id="validModules">0</div>
+        </div>
+        <div class="stat-card" id="percentageCard">
+          <div class="stat-label">Pourcentage</div>
+          <div class="stat-value" id="percentage">0%</div>
+        </div>
+        <div class="stat-card" id="neededCard">
+          <div class="stat-label">Encore Besoin</div>
+          <div class="stat-value" id="needed">0</div>
+        </div>
+      </div>
 
-        <div class="modules-section" id="modulesList"></div>
+      <div class="modules-section" id="modulesList">
+        <div class="empty-state">
+          <div class="empty-state-icon">📝</div>
+          <p>Aucun module ajouté</p>
+          <p style="font-size: 14px; margin-top: 10px">
+            Colle tes notes ci-dessus ou ajoute-les manuellement
+          </p>
+        </div>
+      </div>
 
-        <button class="add-btn" onclick="addModule()">+ Ajouter un module</button>
+      <button class="add-btn" onclick="addModule()">
+        + Ajouter un module manuellement
+      </button>
+      <button
+        class="clear-btn"
+        onclick="clearAll()"
+        id="clearBtn"
+        style="display: none"
+      >
+        🗑️ Tout effacer
+      </button>
 
-        <div class="result" id="result"></div>
+      <div class="result" id="result"></div>
     </div>
 
     <script>
-        let modules = [];
+      let modules = [];
 
-        const grades = ['E', 'D', 'C', 'B', 'A', 'A+'];
-        const validGrades = ['C', 'B', 'A', 'A+'];
+      const grades = [
+        "E",
+        "D-",
+        "D",
+        "D+",
+        "C-",
+        "C",
+        "C+",
+        "B-",
+        "B",
+        "B+",
+        "A-",
+        "A",
+        "A+",
+      ];
+      const validGrades = ["C-", "C", "C+", "B-", "B", "B+", "A-", "A", "A+"];
 
-        function addModule() {
-            modules.push({ name: '', grade: 'E' });
-            render();
+      function importNotes() {
+        const text = document.getElementById("pasteArea").value.trim();
+        if (!text) {
+          alert("Colle d'abord ton relevé de notes dans la zone de texte !");
+          return;
         }
 
-        function deleteModule(index) {
-            modules.splice(index, 1);
-            render();
-        }
+        const lines = text.split("\n").filter((line) => line.trim());
+        const imported = [];
 
-        function updateModule(index, field, value) {
-            modules[index][field] = value;
-            calculate();
-        }
+        for (let line of lines) {
+          line = line.trim();
+          if (!line) continue;
 
-        function calculate() {
-            const total = modules.length;
-            const valid = modules.filter(m => validGrades.includes(m.grade)).length;
-            const percent = total > 0 ? Math.round((valid / total) * 100) : 0;
-            const needed = Math.max(0, Math.ceil(total * 0.7) - valid);
+          let foundGrade = null;
+          let moduleName = line;
 
-            document.getElementById('totalModules').textContent = total;
-            document.getElementById('validModules').textContent = valid;
-            document.getElementById('percentage').textContent = percent + '%';
-            document.getElementById('needed').textContent = needed;
-
-            const percentCard = document.getElementById('percentageCard');
-            const neededCard = document.getElementById('neededCard');
-            const validCard = document.getElementById('validModulesCard');
-
-            percentCard.className = 'stat-card';
-            neededCard.className = 'stat-card';
-            validCard.className = 'stat-card';
-
-            if (percent >= 70) {
-                percentCard.classList.add('success');
-                neededCard.classList.add('success');
-                validCard.classList.add('success');
-            } else {
-                percentCard.classList.add('danger');
-                neededCard.classList.add('danger');
+          for (let grade of grades) {
+            const regex = new RegExp(
+              "\\b" + grade.replace("+", "\\+").replace("-", "\\-") + "\\b",
+              "i",
+            );
+            if (regex.test(line)) {
+              foundGrade = grade;
+              moduleName = line.replace(regex, "").trim();
+              break;
             }
+          }
 
-            const result = document.getElementById('result');
-            if (total === 0) {
-                result.className = 'result warning';
-                result.textContent = 'Ajoute tes modules pour commencer !';
-            } else if (percent >= 70) {
-                result.className = 'result success';
-                result.textContent = `✅ Année validée ! Tu as ${percent}% de modules validés (${valid}/${total})`;
-            } else {
-                result.className = 'result danger';
-                result.textContent = `❌ Année non validée. Il te faut encore ${needed} module(s) validé(s) pour atteindre 70%`;
-            }
-        }
-
-        function render() {
-            const list = document.getElementById('modulesList');
-            list.innerHTML = '';
-
-            modules.forEach((module, index) => {
-                const div = document.createElement('div');
-                div.className = 'module-item';
-
-                const input = document.createElement('input');
-                input.type = 'text';
-                input.placeholder = 'Nom du module';
-                input.value = module.name;
-                input.oninput = (e) => updateModule(index, 'name', e.target.value);
-
-                const select = document.createElement('select');
-                grades.forEach(grade => {
-                    const option = document.createElement('option');
-                    option.value = grade;
-                    option.textContent = grade;
-                    if (grade === module.grade) option.selected = true;
-                    select.appendChild(option);
-                });
-                select.onchange = (e) => {
-                    updateModule(index, 'grade', e.target.value);
-                    render();
-                };
-
-                if (validGrades.includes(module.grade)) {
-                    select.className = 'valid';
-                } else {
-                    select.className = 'invalid';
-                }
-
-                const deleteBtn = document.createElement('button');
-                deleteBtn.className = 'delete-btn';
-                deleteBtn.textContent = '×';
-                deleteBtn.onclick = () => deleteModule(index);
-
-                div.appendChild(input);
-                div.appendChild(select);
-                div.appendChild(deleteBtn);
-                list.appendChild(div);
+          if (foundGrade && moduleName) {
+            imported.push({
+              name: moduleName.replace(/\s+/g, " "),
+              grade: foundGrade,
             });
-
-            calculate();
+          }
         }
 
-        // Initialiser avec quelques modules d'exemple
-        modules = [
-            { name: 'Développement Web', grade: 'B' },
-            { name: 'Base de données', grade: 'C' },
-            { name: 'Algorithmique', grade: 'D' }
-        ];
+        if (imported.length === 0) {
+          alert(
+            "Aucune note trouvée. Vérifie que ton texte contient des modules avec des notes (E, D-, D, D+, C-, C, C+, B-, B, B+, A-, A, A+)",
+          );
+          return;
+        }
+
+        modules = imported;
+        document.getElementById("pasteArea").value = "";
         render();
+        alert(`✅ ${imported.length} module(s) importé(s) avec succès !`);
+      }
+
+      function addModule() {
+        modules.push({ name: "", grade: "E" });
+        render();
+      }
+
+      function deleteModule(index) {
+        modules.splice(index, 1);
+        render();
+      }
+
+      function clearAll() {
+        if (confirm("Es-tu sûr de vouloir tout effacer ?")) {
+          modules = [];
+          render();
+        }
+      }
+
+      function updateModule(index, field, value) {
+        modules[index][field] = value;
+        calculate();
+      }
+
+      function calculate() {
+        const total = modules.length;
+        const valid = modules.filter((m) =>
+          validGrades.includes(m.grade),
+        ).length;
+        const percent = total > 0 ? Math.round((valid / total) * 100) : 0;
+        const needed = Math.max(0, Math.ceil(total * 0.7) - valid);
+
+        document.getElementById("totalModules").textContent = total;
+        document.getElementById("validModules").textContent = valid;
+        document.getElementById("percentage").textContent = percent + "%";
+        document.getElementById("needed").textContent = needed;
+
+        const percentCard = document.getElementById("percentageCard");
+        const neededCard = document.getElementById("neededCard");
+        const validCard = document.getElementById("validModulesCard");
+
+        percentCard.className = "stat-card";
+        neededCard.className = "stat-card";
+        validCard.className = "stat-card";
+
+        if (percent >= 70) {
+          percentCard.classList.add("success");
+          neededCard.classList.add("success");
+          validCard.classList.add("success");
+        } else {
+          percentCard.classList.add("danger");
+          neededCard.classList.add("danger");
+        }
+
+        const result = document.getElementById("result");
+        if (total === 0) {
+          result.className = "result warning";
+          result.textContent = "Ajoute tes modules pour commencer !";
+        } else if (percent >= 70) {
+          result.className = "result success";
+          result.textContent = `✅ Année validée ! Tu as ${percent}% de modules validés (${valid}/${total})`;
+        } else {
+          result.className = "result danger";
+          result.textContent = `❌ Année non validée. Il te faut encore ${needed} module(s) validé(s) pour atteindre 70%`;
+        }
+      }
+
+      function render() {
+        const list = document.getElementById("modulesList");
+        const clearBtn = document.getElementById("clearBtn");
+
+        if (modules.length === 0) {
+          list.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📝</div>
+                        <p>Aucun module ajouté</p>
+                        <p style="font-size: 14px; margin-top: 10px;">Colle tes notes ci-dessus ou ajoute-les manuellement</p>
+                    </div>
+                `;
+          clearBtn.style.display = "none";
+        } else {
+          list.innerHTML = "";
+          clearBtn.style.display = "block";
+
+          modules.forEach((module, index) => {
+            const div = document.createElement("div");
+            div.className = "module-item";
+
+            const input = document.createElement("input");
+            input.type = "text";
+            input.placeholder = "Nom du module";
+            input.value = module.name;
+            input.oninput = (e) => updateModule(index, "name", e.target.value);
+
+            const select = document.createElement("select");
+            grades.forEach((grade) => {
+              const option = document.createElement("option");
+              option.value = grade;
+              option.textContent = grade;
+              if (grade === module.grade) option.selected = true;
+              select.appendChild(option);
+            });
+            select.onchange = (e) => {
+              updateModule(index, "grade", e.target.value);
+              render();
+            };
+
+            if (validGrades.includes(module.grade)) {
+              select.className = "valid";
+            } else {
+              select.className = "invalid";
+            }
+
+            const deleteBtn = document.createElement("button");
+            deleteBtn.className = "delete-btn";
+            deleteBtn.textContent = "×";
+            deleteBtn.onclick = () => deleteModule(index);
+
+            div.appendChild(input);
+            div.appendChild(select);
+            div.appendChild(deleteBtn);
+            list.appendChild(div);
+          });
+        }
+
+        calculate();
+      }
+
+      render();
     </script>
-</body>
+  </body>
 </html>
